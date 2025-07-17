@@ -2,7 +2,7 @@ import streamlit as st
 import cv2
 import numpy as np
 from PIL import Image
-from image_utils.blur_detector import BlurDetector
+from utils.blur_detector import BlurDetector
 
 st.title("Image Blur Detection and Quality Assessment")
 
