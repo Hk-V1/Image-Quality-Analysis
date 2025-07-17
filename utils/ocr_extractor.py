@@ -6,7 +6,7 @@ import re
 
 class OCRExtractor:
     def __init__(self, languages=None):
-        self.reader = easyocr.Reader(languages or ['en'])
+        self.reader = easyocr.Reader(languages or ['en'], gpu=False)  # Add gpu=False if CUDA not installed
 
     def preprocess_image(self, image):
         # Resize for better OCR
@@ -49,23 +49,27 @@ class OCRExtractor:
         serials = []
         for text, conf, _ in detections:
             cleaned = text.replace(" ", "").upper()
+            # Example filter pattern: 2 letters followed by 4–7 digits, e.g., AB123456
             if conf > min_conf and re.match(r"^[A-Z]{0,2}\d{4,7}$", cleaned):
                 serials.append((cleaned, conf))
         return serials
 
 
 if __name__ == "__main__":
-    image_path = "seal_image.png"
+    image_path = "seal_image.png"  # Ensure this image exists in the same folder
     image = cv2.imread(image_path)
 
-    ocr = OCRExtractor()
-    raw_results = ocr.extract_text(image, return_boxes=True)
-    filtered = ocr.filter_serial_numbers(raw_results)
+    if image is None:
+        print(f"Error: Could not read image at path: {image_path}")
+    else:
+        ocr = OCRExtractor()
+        raw_results = ocr.extract_text(image, return_boxes=True)
+        filtered = ocr.filter_serial_numbers(raw_results)
 
-    print("\nRaw OCR Results:")
-    for text, conf, _ in raw_results:
-        print(f"Text: {text} | Confidence: {conf:.2f}")
+        print("\nRaw OCR Results:")
+        for text, conf, _ in raw_results:
+            print(f"Text: {text} | Confidence: {conf:.2f}")
 
-    print("\nFiltered Seal/Serial Numbers:")
-    for text, conf in filtered:
-        print(f" Serial: {text} | Confidence: {conf:.2f}")
+        print("\nFiltered Seal/Serial Numbers:")
+        for text, conf in filtered:
+            print(f"Serial: {text} | Confidence: {conf:.2f}")
