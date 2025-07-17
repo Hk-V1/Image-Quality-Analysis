@@ -16,22 +16,27 @@ if uploaded_file is not None:
 
     st.image(image, caption="Uploaded Image", use_column_width=True)
 
+    # Blur Detection
     detector = BlurDetector()
     lap_var, is_sharp = detector.detect_blur(image_bgr)
-    st.write(f"Laplacian Variance: {lap_var:.2f}")
-    st.write(f"Sharp? {'Yes' if is_sharp else 'No'}")
+    st.write(f" Laplacian Variance: {lap_var:.2f}")
+    st.write(f" Sharp (Laplacian)? {'Yes' if is_sharp else 'No'}")
 
     quality_score = detector.assess_quality(image_bgr)
-    st.write(f"Quality Score: {quality_score:.2f}")
+    st.write(f" Quality Score: {quality_score:.2f}")
 
     fft_score, is_sharp_fft = detector.detect_blur_fft(image_bgr)
-    st.write(f"FFT Blur Score: {fft_score:.4f}")
-    st.write(f"Sharp (FFT)? {'Yes' if is_sharp_fft else 'No'}")
+    st.write(f" FFT Blur Score: {fft_score:.4f}")
+    st.write(f" Sharp (FFT)? {'Yes' if is_sharp_fft else 'No'}")
 
     # OCR section
     st.markdown("---")
-    st.subheader("Seal/Serial Number Detection (OCR)")
-    ocr = OCRExtractor()
-    text = ocr.extract_text(image_bgr)
-    st.code(text if text else "No text detected.")
+    st.subheader(" Seal / Serial Number Detection")
 
+    ocr = OCRExtractor()
+    extracted_text = ocr.extract_text(image_bgr)
+
+    if extracted_text:
+        st.code(extracted_text, language="text")
+    else:
+        st.warning("No text detected.")
