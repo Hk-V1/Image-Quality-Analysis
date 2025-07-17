@@ -1,81 +1,29 @@
-import cv2
 import streamlit as st
-from utils.blur_detector import BlurDetector
-from utils.ocr_utils import OCRUtils
-from PIL import Image
+import cv2
 import numpy as np
+from PIL import Image
+from image_utils.blur_detector import BlurDetector
 
-class SerialNumberApp:
-    def __init__(self):
-        self.blur_detector = BlurDetector()
-        self.ocr_utils = OCRUtils()
-        
-    def run(self):
-        st.set_page_config(page_title="Serial Number Detector", layout="wide")
-        st.title("Real-time Serial Number Detection")
-        
-        # Sidebar settings
-        st.sidebar.header("Settings")
-        blur_threshold = st.sidebar.slider("Blur Threshold", 50, 200, 100)
-        quality_threshold = st.sidebar.slider("Quality Threshold", 20, 100, 50)
-        
-        # OCR settings
-        st.sidebar.subheader("OCR Settings")
-        enable_preprocessing = st.sidebar.checkbox("Enhanced Preprocessing", True)
-        upscale_image = st.sidebar.checkbox("Upscale Small Images", True)
-        
-        # Update thresholds
-        self.blur_detector.set_threshold(blur_threshold)
-        
-        # Image upload
-        uploaded_image = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
-        
-        if uploaded_image:
-            image = Image.open(uploaded_image)
-            opencv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-            
-            # Create columns
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.subheader("Uploaded Image")
-                st.image(image, use_column_width=True)
-                
-            with col2:
-                st.subheader("Analysis Results")
-                
-                # Blur detection
-                blur_score, is_sharp = self.blur_detector.detect_blur(opencv_image)
-                st.metric("Blur Score", f"{blur_score:.2f}", 
-                         "Sharp" if is_sharp else "Blurry")
-                
-                # Quality assessment
-                quality_score = self.blur_detector.assess_quality(opencv_image)
-                st.metric("Quality Score", f"{quality_score:.2f}")
-                
-                # OCR extraction
-                if is_sharp:
-                    with st.spinner("Extracting serial number..."):
-                        serial_number = self.ocr_utils.extract_serial_number(opencv_image)
-                        
-                    if serial_number:
-                        st.success(f"Serial Number: {serial_number}")
-                        
-                        # Show confidence and details
-                        if len(serial_number) == 6 and serial_number.isdigit():
-                            st.info("Pattern: 6-digit component number")
-                        elif serial_number.isdigit():
-                            st.info(f"Pattern: {len(serial_number)}-digit number")
-                        else:
-                            st.info(f"Pattern: Alphanumeric ({len(serial_number)} characters)")
-                            
-                    else:
-                        st.warning("No serial number detected")
-                        st.info("Try better lighting, a closer shot, or a different angle")
-                else:
-                    st.error("Image too blurry for OCR")
-                    st.info("Hold camera steady and ensure good lighting")
+st.title("Image Blur Detection and Quality Assessment")
 
-if __name__ == "__main__":
-    app = SerialNumberApp()
-    app.run()
+uploaded_file = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
+
+if uploaded_file is not None:
+    image = Image.open(uploaded_file).convert("RGB")
+    image_np = np.array(image)
+    image_bgr = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR)
+
+    st.image(image, caption="Uploaded Image", use_column_width=True)
+
+    detector = BlurDetector()
+
+    lap_var, is_sharp = detector.detect_blur(image_bgr)
+    st.write(f"Laplacian Variance: {lap_var:.2f}")
+    st.write(f"Sharp? {'Yes' if is_sharp else 'No'}")
+
+    quality_score = detector.assess_quality(image_bgr)
+    st.write(f"Quality Score: {quality_score:.2f}")
+
+    fft_score, is_sharp_fft = detector.detect_blur_fft(image_bgr)
+    st.write(f"FFT Blur Score: {fft_score:.4f}")
+    st.write(f"Sharp (FFT)? {'Yes' if is_sharp_fft else 'No'}")
