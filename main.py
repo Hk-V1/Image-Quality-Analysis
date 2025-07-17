@@ -3,8 +3,9 @@ import cv2
 import numpy as np
 from PIL import Image
 from utils.blur_detector import BlurDetector
+from utils.ocr_extractor import OCRExtractor
 
-st.title("Image Blur Detection and Quality Assessment")
+st.title("Image Blur Detection, Quality Assessment, and OCR")
 
 uploaded_file = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
 
@@ -16,7 +17,6 @@ if uploaded_file is not None:
     st.image(image, caption="Uploaded Image", use_column_width=True)
 
     detector = BlurDetector()
-
     lap_var, is_sharp = detector.detect_blur(image_bgr)
     st.write(f"Laplacian Variance: {lap_var:.2f}")
     st.write(f"Sharp? {'Yes' if is_sharp else 'No'}")
@@ -27,3 +27,11 @@ if uploaded_file is not None:
     fft_score, is_sharp_fft = detector.detect_blur_fft(image_bgr)
     st.write(f"FFT Blur Score: {fft_score:.4f}")
     st.write(f"Sharp (FFT)? {'Yes' if is_sharp_fft else 'No'}")
+
+    # OCR section
+    st.markdown("---")
+    st.subheader("Seal/Serial Number Detection (OCR)")
+    ocr = OCRExtractor()
+    text = ocr.extract_text(image_bgr)
+    st.code(text if text else "No text detected.")
+
