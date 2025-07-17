@@ -1,17 +1,17 @@
 import cv2
-import pytesseract
+import easyocr
 
 class OCRExtractor:
-    def __init__(self, tesseract_cmd=None):
+    def __init__(self, languages=None):
         """
-        Optionally specify path to tesseract executable
+        Initializes the EasyOCR reader.
+        :param languages: List of language codes (e.g., ['en'])
         """
-        if tesseract_cmd:
-            pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
+        self.reader = easyocr.Reader(languages or ['en'])
 
     def extract_text(self, image):
         """
-        Extracts text from the image using OCR
+        Extracts text from the image using EasyOCR
         :param image: Input image (BGR)
         :return: Extracted text (string)
         """
@@ -19,7 +19,10 @@ class OCRExtractor:
         blur = cv2.medianBlur(gray, 3)
         _, thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
-        # Use a config to improve digit/ID accuracy (can tweak based on format)
-        config = "--psm 6"  # Assume a block of text
-        text = pytesseract.image_to_string(thresh, config=config)
+        # EasyOCR works with RGB format
+        rgb = cv2.cvtColor(thresh, cv2.COLOR_GRAY2RGB)
+        results = self.reader.readtext(rgb)
+
+        # Concatenate results
+        text = " ".join([res[1] for res in results])
         return text.strip()
