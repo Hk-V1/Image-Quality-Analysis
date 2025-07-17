@@ -12,7 +12,7 @@ class SerialNumberApp:
         
     def run(self):
         st.set_page_config(page_title="Serial Number Detector", layout="wide")
-        st.title("📷 Real-time Serial Number Detection")
+        st.title("Real-time Serial Number Detection")
         
         # Sidebar settings
         st.sidebar.header("Settings")
@@ -27,19 +27,18 @@ class SerialNumberApp:
         # Update thresholds
         self.blur_detector.set_threshold(blur_threshold)
         
-        # Camera input
-        camera_input = st.camera_input("Take a picture")
+        # Image upload
+        uploaded_image = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
         
-        if camera_input:
-            # Convert to OpenCV format
-            image = Image.open(camera_input)
+        if uploaded_image:
+            image = Image.open(uploaded_image)
             opencv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
             
             # Create columns
             col1, col2 = st.columns(2)
             
             with col1:
-                st.subheader("Original Image")
+                st.subheader("Uploaded Image")
                 st.image(image, use_column_width=True)
                 
             with col2:
@@ -48,7 +47,7 @@ class SerialNumberApp:
                 # Blur detection
                 blur_score, is_sharp = self.blur_detector.detect_blur(opencv_image)
                 st.metric("Blur Score", f"{blur_score:.2f}", 
-                         "Sharp ✅" if is_sharp else "Blurry ❌")
+                         "Sharp" if is_sharp else "Blurry")
                 
                 # Quality assessment
                 quality_score = self.blur_detector.assess_quality(opencv_image)
@@ -60,22 +59,22 @@ class SerialNumberApp:
                         serial_number = self.ocr_utils.extract_serial_number(opencv_image)
                         
                     if serial_number:
-                        st.success(f"🎯 Serial Number: **{serial_number}**")
+                        st.success(f"Serial Number: {serial_number}")
                         
                         # Show confidence and details
                         if len(serial_number) == 6 and serial_number.isdigit():
-                            st.info("✅ Pattern: 6-digit component number")
+                            st.info("Pattern: 6-digit component number")
                         elif serial_number.isdigit():
-                            st.info(f"✅ Pattern: {len(serial_number)}-digit number")
+                            st.info(f"Pattern: {len(serial_number)}-digit number")
                         else:
-                            st.info(f"✅ Pattern: Alphanumeric ({len(serial_number)} chars)")
+                            st.info(f"Pattern: Alphanumeric ({len(serial_number)} characters)")
                             
                     else:
-                        st.warning("⚠️ No serial number detected")
-                        st.info("💡 Try: Better lighting, closer shot, or different angle")
+                        st.warning("No serial number detected")
+                        st.info("Try better lighting, a closer shot, or a different angle")
                 else:
-                    st.error("❌ Image too blurry for OCR")
-                    st.info("💡 Hold camera steady and ensure good lighting")
+                    st.error("Image too blurry for OCR")
+                    st.info("Hold camera steady and ensure good lighting")
 
 if __name__ == "__main__":
     app = SerialNumberApp()
