@@ -32,11 +32,11 @@ if uploaded_file is not None:
     # OCR section
     st.markdown("---")
     st.subheader(" Seal / Serial Number Detection")
-
+    
     ocr = OCRExtractor()
-    extracted_text = ocr.extract_text(image_bgr)
-
-    if extracted_text:
-        st.code(extracted_text, language="text")
+    ocr_results = ocr.extract_text(image_bgr, return_boxes=True)
+    if ocr_results:
+        for i, (text, conf, box) in enumerate(ocr_results):
+        st.write(f"**#{i+1}** - Text: `{text}` | Confidence: `{conf:.2f}`") 
     else:
-        st.warning("No text detected.")
+        st.warning(" No text detected by OCR.")
