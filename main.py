@@ -37,6 +37,6 @@ if uploaded_file is not None:
     ocr_results = ocr.extract_text(image_bgr, return_boxes=True)
     if ocr_results:
         for i, (text, conf, box) in enumerate(ocr_results):
-        st.write(f"**#{i+1}** - Text: `{text}` | Confidence: `{conf:.2f}`") 
+            st.write(f"**#{i+1}** - Text: `{text}` | Confidence: `{conf:.2f}`") 
     else:
         st.warning(" No text detected by OCR.")
